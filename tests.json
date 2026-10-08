@@ -1,0 +1,132 @@
+[
+  {
+    "name": "Request and cancel a ride",
+    "sanity": true,
+    "viewport": "mobile",
+    "covers": [
+      "passenger booking",
+      "fare estimates and vehicle selection",
+      "POST /api/sessions and /api/state",
+      "POST /api/command booking and cancellation",
+      "same-place validation",
+      "cancellation confirmation",
+      "durable trip history",
+      "responsive navigation",
+      "installation help",
+      "installable demo manifest"
+    ],
+    "description": "A passenger validates the route, requests a ride, cancels it and sees the persisted cancelled record.",
+    "steps": [
+      "Click Install demo. Verify Android and iPhone instructions and the warning that real rides and payments are not provided. Close installation help.",
+      "Start a new demo using the sidebar menu.",
+      "Set pickup and destination both to Accra Mall. Verify Request is disabled and a validation message appears.",
+      "Set destination to Osu Oxford Street, select DropIn Go, then request a ride.",
+      "Verify a current ride with a demo driver and a fare appears.",
+      "Cancel ride, choose Keep ride, then cancel again and Confirm cancellation.",
+      "Open My rides from the sidebar and refresh the browser."
+    ],
+    "expected": "The demo ride remains visible as Ride cancelled with its quoted fare, and no active ride remains."
+  },
+  {
+    "name": "Complete a trip and record driver earnings",
+    "viewport": "desktop",
+    "covers": [
+      "nearest available matching driver",
+      "driver acceptance and ordered trip states",
+      "POST /api/command ride progression and rating",
+      "driver earnings ledger",
+      "receipt download",
+      "passenger ratings",
+      "admin overview and export"
+    ],
+    "description": "A booked ride progresses through the driver workflow and yields a durable receipt, earnings and rating.",
+    "steps": [
+      "Start a new demo.",
+      "In Passenger book DropIn Go from Accra Mall to Osu Oxford Street.",
+      "Switch to Driver and select Kwame Mensah.",
+      "Click Accept ride, Arrived at pickup, Start trip and Complete trip in order.",
+      "Open Earnings and verify a completed trip and nonzero net demo earnings; download its receipt.",
+      "Switch to Passenger and rate the completed ride 5 stars.",
+      "Switch to Admin and verify Overview shows one completed ride and its gross fare.",
+      "Open Ride management and export demo rides. Refresh the browser."
+    ],
+    "expected": "The completed ride persists, earnings equal 85% of the fare, overview records the completed fare, receipt and CSV download, and returning to Passenger no longer shows the rating prompt."
+  },
+  {
+    "name": "Manage availability and fare settings",
+    "viewport": "desktop",
+    "covers": [
+      "driver availability",
+      "POST /api/command availability dispatch and settings",
+      "no matching driver handling",
+      "retry dispatch",
+      "fare settings persistence",
+      "quoted fare immutability"
+    ],
+    "description": "Offline availability yields an unassigned request which can be redispatched after pricing settings are saved.",
+    "steps": [
+      "Start a new demo.",
+      "Switch to Admin, open Drivers & applicants and click Online for Kwame Mensah to set him Offline.",
+      "Open Fare settings, change base fare to 10 and commission to 20, then save.",
+      "Switch to Passenger and request DropIn Go from Accra Mall to Osu Oxford Street.",
+      "Verify Finding a driver is visible. Note the quoted fare.",
+      "Switch to Admin, set Kwame Mensah back Online and change base fare to 12.",
+      "Open Ride management and click Find driver again.",
+      "Refresh the browser and review the trip record."
+    ],
+    "expected": "The existing quoted fare is retained, the ride becomes Waiting for driver with Kwame assigned, and the updated base fare 12 and commission 20 persist in Fare settings."
+  },
+  {
+    "name": "Submit and review driver applications",
+    "viewport": "mobile",
+    "covers": [
+      "recruitment form validation",
+      "POST /api/command apply and approve",
+      "driver application rejection",
+      "driver roster persistence",
+      "city selection",
+      "service setup status"
+    ],
+    "description": "A sample driver is approved into the offline roster and a second application can be rejected.",
+    "steps": [
+      "Start a new demo.",
+      "In Passenger select Tamale from Service city and verify Tamale places are available.",
+      "Open Drive with DropIn from the sidebar. Try submitting an empty application and verify required fields block it.",
+      "Submit sample name Demo Driver, vehicle Toyota Corolla, city Tamale.",
+      "Switch to Admin, open Drivers & applicants, approve Demo Driver.",
+      "Switch to Passenger, submit sample name Reject Driver, vehicle Kia Picanto, city Accra.",
+      "Switch to Admin, reject Reject Driver. Refresh.",
+      "Open Help using Service status if visible, or switch to Passenger and open the mobile sidebar then return to the desktop if necessary; verify live services are shown as setup required."
+    ],
+    "expected": "Demo Driver is an approved offline driver in Tamale, Reject Driver remains rejected and not in the roster, and live Firebase, GPS, MoMo and WhatsApp are identified as not connected."
+  },
+  {
+    "name": "Surface backend write failures without phantom rides",
+    "viewport": "desktop",
+    "covers": [
+      "POST /api/command error handling",
+      "failed-write guardrail",
+      "service status modal",
+      "demo session isolation and reset"
+    ],
+    "description": "A failed booking is displayed as an error without a false success or active trip.",
+    "qa_faults": [
+      {
+        "method": "POST",
+        "path": "/api/command",
+        "status": 500,
+        "body_json": {
+          "error": "Booking is temporarily unavailable. Please retry."
+        }
+      }
+    ],
+    "steps": [
+      "Start a new demo.",
+      "Request DropIn Go from Accra Mall to Osu Oxford Street.",
+      "Verify a visible booking error, then open My rides.",
+      "Open Help and service status, verify demo and unconfigured live services, then close it.",
+      "Start a new demo and open My rides."
+    ],
+    "expected": "An error message is visible after booking failure, no ride is present in history, and a new demo begins with no trip records."
+  }
+]

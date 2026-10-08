@@ -1,0 +1,25 @@
+name: dropin_driver
+description: DropIn Ghana Firebase pilot app
+publish_to: none
+version: 1.0.0+1
+environment:
+  sdk: '>=3.4.0 <4.0.0'
+dependencies:
+  flutter:
+    sdk: flutter
+  firebase_core: ^3.10.0
+  firebase_messaging: ^15.2.0
+  firebase_storage: ^12.4.0
+  file_picker: ^8.1.0
+  firebase_auth: ^5.4.0
+  firebase_app_check: ^0.3.2
+  cloud_firestore: ^5.6.0
+  cloud_functions: ^5.3.0
+  geolocator: ^13.0.0
+  url_launcher: ^6.3.0
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+flutter:
+  uses-material-design: true

@@ -1,0 +1,17 @@
+rules_version = '2';
+service firebase.storage {
+ match /b/{bucket}/o {
+  function admin() { return request.auth != null && request.auth.token.admin == true; }
+  match /driver-documents/{uid}/{kind}/{filename} {
+   allow read: if admin() || (request.auth != null && request.auth.uid == uid);
+   allow create: if request.auth != null && request.auth.uid == uid
+     && kind in ['licence','insurance','roadworthiness','identity']
+     && firestore.exists(/databases/(default)/documents/drivers/$(uid))
+     && firestore.get(/databases/(default)/documents/drivers/$(uid)).data.approved == false
+     && request.resource.size <= 5 * 1024 * 1024
+     && request.resource.contentType in ['image/jpeg','image/png','application/pdf'];
+   allow update, delete: if false;
+  }
+  match /{path=**} { allow read, write: if false; }
+ }
+}
