@@ -1,4 +1,25 @@
-# DropIn Ghana — expanded pilot source
+# DropIn Ghana
+
+## Netlify web app (dropinride.netlify.app)
+The web app in `src/` and `netlify/` is a working ride-hailing service on Netlify:
+riders book and track trips, drivers apply, upload documents and take trips, and operators
+review drivers, set fares and watch rides.
+
+- Sign-in: Netlify Identity (email and password).
+- Data: Netlify Database (`db/schema.ts`, migrations in `netlify/database/migrations`). Driver documents are stored privately in Netlify Blobs.
+- API: `netlify/functions/api.mts` (all `/api/*` routes). `dispatch-sweep.mts` runs every minute to expire offers and re-dispatch waiting rides.
+
+### Operator setup
+1. Make yourself an operator: in the Netlify dashboard open **Identity**, select your user and add the `admin` role
+   (or set the `ADMIN_EMAILS` environment variable to a comma-separated list of operator emails).
+2. Optional `GOOGLE_MAPS_API_KEY` (Places, Geocoding and Routes APIs) for Google address search and traffic-aware fares.
+   Without it, address search uses OpenStreetMap and fares use a straight-line estimate.
+3. Optional mobile money: set `PAYSTACK_SECRET_KEY`, point the Paystack webhook to `https://<your-site>/api/paystack/webhook`,
+   then enable "Offer mobile money" in Operations.
+
+---
+
+## Expanded pilot source (Firebase/Flutter)
 
 The installable web demonstration is live at https://dropin-ghana-ybijad.v2.appdeploy.ai/.
 It is separate from the real Firebase/Flutter service. Installing it does not enable real dispatch.
