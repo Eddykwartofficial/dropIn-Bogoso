@@ -1,0 +1,6 @@
+{
+  "name": "netlify-purge-cloudflare-on-deploy",
+  "version": "1.2.0-dropin.1",
+  "private": true,
+  "main": "index.js"
+}

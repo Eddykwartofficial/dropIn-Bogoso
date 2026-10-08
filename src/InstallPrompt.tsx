@@ -1,18 +1,71 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Download } from 'lucide-react';
+
+type InstallEvent = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> };
+
+const standalone = () => window.matchMedia('(display-mode: standalone)').matches || (navigator as any).standalone === true;
 
 export default function InstallPrompt() {
-  const [open, setOpen] = useState(false);
-  return <>
-    <button onClick={() => setOpen(true)} style={{ position: 'fixed', right: 16, bottom: 20, zIndex: 60, background: '#244c36', color: 'white', padding: '10px 16px', borderRadius: 24 }}>Install demo</button>
-    {open && <div role='dialog' aria-modal='true' aria-label='Install DropIn demo' style={{ position: 'fixed', inset: 0, zIndex: 100, background: '#0008', display: 'grid', placeItems: 'center', padding: 24 }}>
-      <section style={{ background: 'white', color: '#244c36', borderRadius: 20, padding: 24, maxWidth: 440 }}>
-        <h2>Install DropIn demo</h2>
-        <p>This is a demonstration. It does not dispatch real rides or collect payments.</p>
-        <p>Android: open your browser menu and choose Install app or Add to Home screen.</p>
-        <p>iPhone: open this site in Safari, tap Share, then Add to Home Screen.</p>
-        <p>An internet connection is required to use the demo.</p>
-        <button autoFocus onClick={() => setOpen(false)} style={{ padding: '10px 20px', background: '#244c36', color: 'white', borderRadius: 12 }}>Close installation help</button>
-      </section>
-    </div>}
-  </>;
+  const [deferred, setDeferred] = useState<InstallEvent | null>(null);
+  const [help, setHelp] = useState(false);
+  const [hidden, setHidden] = useState(() => standalone() || localStorage.getItem('dropin-install-dismissed') === '1');
+
+  useEffect(() => {
+    const onPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferred(e as InstallEvent);
+    };
+    const onInstalled = () => setHidden(true);
+    window.addEventListener('beforeinstallprompt', onPrompt);
+    window.addEventListener('appinstalled', onInstalled);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', onPrompt);
+      window.removeEventListener('appinstalled', onInstalled);
+    };
+  }, []);
+
+  if (hidden) return null;
+  const dismiss = () => {
+    localStorage.setItem('dropin-install-dismissed', '1');
+    setHidden(true);
+    setHelp(false);
+  };
+
+  return (
+    <>
+      <button
+        className="btn btn-gold btn-sm install-btn"
+        onClick={async () => {
+          if (!deferred) return setHelp(true);
+          await deferred.prompt();
+          if ((await deferred.userChoice).outcome === 'accepted') setHidden(true);
+          setDeferred(null);
+        }}
+      >
+        <Download size={15} /> Install app
+      </button>
+      {help && (
+        <div role="dialog" aria-modal="true" aria-labelledby="install-title" className="center-screen" style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgb(0 0 0 / 45%)', minHeight: 0 }}>
+          <section className="card narrow stack">
+            <h2 id="install-title">Install DropIn</h2>
+            <p>
+              <strong>Android:</strong> open your browser menu and choose <em>Install app</em> or <em>Add to Home screen</em>.
+            </p>
+            <p>
+              <strong>iPhone:</strong> open this site in Safari, tap <em>Share</em>, then <em>Add to Home Screen</em>.
+            </p>
+            <p className="muted small">An internet connection is needed to book and take rides.</p>
+            <div className="row">
+              <button autoFocus className="btn btn-primary" onClick={() => setHelp(false)}>
+                Got it
+              </button>
+              <button className="btn btn-ghost" onClick={dismiss}>
+                Don’t show again
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
+    </>
+  );
 }

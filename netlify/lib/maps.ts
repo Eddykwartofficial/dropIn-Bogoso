@@ -9,8 +9,33 @@ export function inGhana(p: LatLng) {
   return p.lat >= 4.5 && p.lat <= 11.3 && p.lng >= -3.4 && p.lng <= 1.3;
 }
 
+const OSM_HEADERS = { 'User-Agent': 'DropIn Ghana ride app (dropinride.netlify.app)', 'Accept-Language': 'en' };
+
+// OpenStreetMap search is used when no Google key is configured. Results already carry coordinates.
+async function osmSearch(input: string, near?: LatLng) {
+  const params = new URLSearchParams({ q: input, format: 'jsonv2', countrycodes: 'gh', limit: '6', addressdetails: '0' });
+  if (near) {
+    const d = 0.4;
+    params.set('viewbox', `${near.lng - d},${near.lat + d},${near.lng + d},${near.lat - d}`);
+  }
+  const res = await fetch(`https://nominatim.openstreetmap.org/search?${params}`, { headers: OSM_HEADERS });
+  if (!res.ok) fail(502, 'Address search is unavailable right now. Drop a pin on the map instead.');
+  const data: any[] = await res.json();
+  return data.map(r => {
+    const [main, ...rest] = String(r.display_name).split(', ');
+    return {
+      placeId: `osm:${r.place_id}`,
+      main,
+      secondary: rest.slice(0, 3).join(', '),
+      address: String(r.display_name).split(', ').slice(0, 4).join(', '),
+      lat: Number(r.lat),
+      lng: Number(r.lon),
+    };
+  });
+}
+
 export async function autocomplete(input: string, sessionToken: string, near?: LatLng) {
-  if (!key()) fail(503, 'Address search is not configured yet. Drop a pin on the map instead.');
+  if (!key()) return osmSearch(input, near);
   const res = await fetch('https://places.googleapis.com/v1/places:autocomplete', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': key() },
@@ -55,7 +80,18 @@ export async function placeDetails(placeId: string, sessionToken: string) {
 
 export async function reverseGeocode(p: LatLng) {
   const fallback = `Pinned location (${p.lat.toFixed(5)}, ${p.lng.toFixed(5)})`;
-  if (!key()) return fallback;
+  if (!key()) {
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${p.lat}&lon=${p.lng}&format=jsonv2&zoom=18`,
+        { headers: OSM_HEADERS }
+      );
+      const data: any = await res.json();
+      return data.display_name ? String(data.display_name).split(', ').slice(0, 4).join(', ') : fallback;
+    } catch {
+      return fallback;
+    }
+  }
   try {
     const res = await fetch(
       `https://maps.googleapis.com/maps/api/geocode/json?latlng=${p.lat},${p.lng}&key=${key()}`

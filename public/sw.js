@@ -1,10 +1,10 @@
-const CACHE = 'dropin-demo-offline-v1';
+const CACHE = 'dropin-offline-v2';
 const OFFLINE = new URL('offline.html', self.registration.scope).href;
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.add(OFFLINE)).then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', event => {
-  event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith('dropin-demo-offline-') && key !== CACHE).map(key => caches.delete(key)))).then(() => self.clients.claim()));
+  event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => (key.startsWith('dropin-demo-offline-') || key.startsWith('dropin-offline-')) && key !== CACHE).map(key => caches.delete(key)))).then(() => self.clients.claim()));
 });
 self.addEventListener('fetch', event => {
   // Never cache or replay requests, private data, API calls or payment actions.

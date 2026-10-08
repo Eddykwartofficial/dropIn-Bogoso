@@ -14,7 +14,7 @@ createRoot(document.getElementById('root')!).render(
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register(new URL('sw.js', document.baseURI).href).catch(() => {
-      console.warn('Offline page unavailable; the connected demo still works.');
+      console.warn('Offline page unavailable; DropIn still works online.');
     });
   });
 }
